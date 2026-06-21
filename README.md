@@ -1,3 +1,13 @@
+---
+title: Carbon
+emoji: 🚀
+colorFrom: gray
+colorTo: pink
+sdk: docker
+pinned: false
+license: mit
+---
+
 # Carbon Compass
 
 Carbon Compass is a full-stack carbon footprint tracking application for the PromptWars hackathon challenge by Virtual on hack2skill. It helps individuals log daily activity, understand the largest sources of emissions, act on personalized recommendations, and celebrate small reduction milestones.
