@@ -1,9 +1,12 @@
 # Stage 1: Build stage
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
+
+# Install build tools required to compile better-sqlite3 native C++ addon
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# Copy package files and install all dependencies
+# Copy package files and install all dependencies (including devDependencies for building)
 COPY package*.json ./
 RUN npm ci
 
@@ -13,21 +16,26 @@ COPY . .
 # Build both client and server projects
 RUN npm run build
 
+# Prune node_modules to keep only production dependencies
+RUN npm prune --production
+
 # Stage 2: Production run stage
-FROM node:20-slim AS runner
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=7860
 
-# Copy package files and install production-only dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm ci --only=production
 
 # Copy compiled files and required migration sources
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server/migrations ./server/migrations
+
+# Copy compiled production node_modules from the builder stage
+COPY --from=builder /app/node_modules ./node_modules
 
 # Create the data directory for SQLite and grant ownership to the non-root 'node' user
 RUN mkdir -p /app/data && chown -R node:node /app/data
