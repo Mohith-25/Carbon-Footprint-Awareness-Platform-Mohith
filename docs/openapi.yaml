@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Carbon Compass API
+  version: 1.0.0
+  description: API for a personal carbon footprint tracker with JWT cookie authentication and CSRF protection.
+servers:
+  - url: http://localhost:4000
+paths:
+  /api/csrf:
+    get:
+      summary: Create a CSRF token cookie
+      responses:
+        "200":
+          description: Token issued
+  /api/auth/signup:
+    post:
+      summary: Create a user account
+      parameters:
+        - $ref: "#/components/parameters/Csrf"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Signup"
+      responses:
+        "201":
+          description: Signed up
+        "409":
+          description: Email already exists
+  /api/auth/login:
+    post:
+      summary: Log in
+      parameters:
+        - $ref: "#/components/parameters/Csrf"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Login"
+      responses:
+        "200":
+          description: Logged in
+        "401":
+          description: Invalid credentials
+  /api/auth/logout:
+    post:
+      summary: Log out
+      parameters:
+        - $ref: "#/components/parameters/Csrf"
+      responses:
+        "200":
+          description: Logged out
+  /api/auth/me:
+    get:
+      summary: Current user profile
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Current user
+  /api/dashboard:
+    get:
+      summary: Dashboard timeline, actions, progress, and recommendations
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Dashboard data
+  /api/footprints:
+    get:
+      summary: List footprint entries
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Entries
+    post:
+      summary: Log a daily footprint entry
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Csrf"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FootprintInput"
+      responses:
+        "201":
+          description: Entry created with breakdown and recommendations
+  /api/actions:
+    post:
+      summary: Log an eco-friendly action
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Csrf"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EcoAction"
+      responses:
+        "201":
+          description: Action created
+components:
+  parameters:
+    Csrf:
+      name: x-csrf-token
+      in: header
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token
+  schemas:
+    Signup:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+    Login:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    FootprintInput:
+      type: object
+      required: [entryDate, transportKm, transportMode, electricityKwh, gasKwh, dietType, meals, purchasesAmount]
+      properties:
+        entryDate:
+          type: string
+          example: "2026-06-21"
+        transportKm:
+          type: number
+        transportMode:
+          type: string
+          enum: [walk_bike, public_transit, car, electric_car, flight]
+        electricityKwh:
+          type: number
+        gasKwh:
+          type: number
+        dietType:
+          type: string
+          enum: [plant_based, vegetarian, mixed, meat_heavy]
+        meals:
+          type: integer
+        purchasesAmount:
+          type: number
+        notes:
+          type: string
+    EcoAction:
+      type: object
+      required: [actionDate, category, description, estimatedSavingsKg]
+      properties:
+        actionDate:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        estimatedSavingsKg:
+          type: number
