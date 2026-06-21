@@ -14,7 +14,7 @@ export function runMigrations(db = createDatabase()): void {
   const workspaceMigrationDir = join(process.cwd(), "server", "migrations");
   const migrationDir = existsSync(workspaceMigrationDir)
     ? workspaceMigrationDir
-    : fileURLToPath(new URL("../../migrations", import.meta.url));
+    : fileURLToPath(new URL("../../../server/migrations", import.meta.url));
   const files = readdirSync(migrationDir).filter((file) => file.endsWith(".sql")).sort();
   const applied = new Set(
     db.prepare("SELECT filename FROM schema_migrations").all().map((row) => (row as { filename: string }).filename)

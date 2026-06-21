@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -132,6 +134,14 @@ export function createApp(db: Db) {
       });
     })
   );
+
+  const clientBuildPath = join(process.cwd(), "dist", "client");
+  if (existsSync(clientBuildPath)) {
+    app.use(express.static(clientBuildPath));
+    app.get(/.*/, (_req, res) => {
+      res.sendFile(join(clientBuildPath, "index.html"));
+    });
+  }
 
   app.use(errorHandler);
   return app;
