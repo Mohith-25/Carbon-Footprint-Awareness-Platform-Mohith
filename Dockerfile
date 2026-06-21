@@ -26,6 +26,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=7860
+ENV JWT_SECRET=production-fallback-secret-please-change-in-settings
 
 # Copy package files
 COPY package*.json ./
