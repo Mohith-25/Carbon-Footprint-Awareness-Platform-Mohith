@@ -10,6 +10,15 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: "dist/client"
+    outDir: "dist/client",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            return "vendor";
+          }
+        }
+      }
+    }
   }
 });
