@@ -110,15 +110,36 @@ export function createRepositories(db: Db) {
         const actions = db
           .prepare("SELECT COUNT(*) AS actionsCount, COALESCE(SUM(estimated_savings_kg), 0) AS savedKg FROM eco_actions WHERE user_id = ?")
           .get(userId) as { actionsCount: number; savedKg: number };
-        const progressStats = { ...stats, ...actions };
-        const insert = db.prepare("INSERT OR IGNORE INTO milestones(user_id, code, title) VALUES (?, ?, ?)");
-        for (const milestone of eligibleMilestones(progressStats)) {
-          insert.run(userId, milestone.code, milestone.title);
-        }
         const milestones = db
           .prepare("SELECT code, title, achieved_at AS achievedAt FROM milestones WHERE user_id = ? ORDER BY achieved_at DESC")
           .all(userId);
-        return { ...progressStats, milestones };
+        return { ...stats, ...actions, milestones };
+      },
+      checkAndInsertMilestones(userId: number) {
+        const stats = db
+          .prepare(
+            `SELECT
+              COUNT(*) AS entriesCount,
+              COALESCE(AVG(total_kg), 0) AS averageKg,
+              COALESCE((SELECT total_kg FROM footprint_entries WHERE user_id = ? ORDER BY entry_date DESC, id DESC LIMIT 1), 0) AS latestKg
+             FROM footprint_entries
+             WHERE user_id = ?`
+          )
+          .get(userId, userId) as { entriesCount: number; averageKg: number; latestKg: number };
+        const actions = db
+          .prepare("SELECT COUNT(*) AS actionsCount, COALESCE(SUM(estimated_savings_kg), 0) AS savedKg FROM eco_actions WHERE user_id = ?")
+          .get(userId) as { actionsCount: number; savedKg: number };
+        const progressStats = { ...stats, ...actions };
+        const eligible = eligibleMilestones(progressStats);
+        if (eligible.length > 0) {
+          const insert = db.prepare("INSERT OR IGNORE INTO milestones(user_id, code, title) VALUES (?, ?, ?)");
+          const transaction = db.transaction((milestonesList) => {
+            for (const milestone of milestonesList) {
+              insert.run(userId, milestone.code, milestone.title);
+            }
+          });
+          transaction(eligible);
+        }
       }
     }
   };

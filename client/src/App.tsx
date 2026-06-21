@@ -15,7 +15,7 @@ import { apiFetch, DashboardData, User } from "./api";
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, BarElement, PointElement, Tooltip, Legend);
 
-const today = new Date().toISOString().slice(0, 10);
+const today = new Date().toLocaleDateString("sv-SE");
 
 const emptyDashboard: DashboardData = {
   entries: [],
@@ -82,10 +82,22 @@ export function App() {
           <h1 id="auth-title">Carbon Compass</h1>
           <p>Track everyday choices, learn your largest sources, and turn small actions into steady climate progress.</p>
           <div className="segmented" role="tablist" aria-label="Authentication mode">
-            <button className={authMode === "signup" ? "active" : ""} onClick={() => setAuthMode("signup")} type="button">
+            <button
+              role="tab"
+              aria-selected={authMode === "signup"}
+              className={authMode === "signup" ? "active" : ""}
+              onClick={() => setAuthMode("signup")}
+              type="button"
+            >
               Sign up
             </button>
-            <button className={authMode === "login" ? "active" : ""} onClick={() => setAuthMode("login")} type="button">
+            <button
+              role="tab"
+              aria-selected={authMode === "login"}
+              className={authMode === "login" ? "active" : ""}
+              onClick={() => setAuthMode("login")}
+              type="button"
+            >
               Log in
             </button>
           </div>
@@ -263,9 +275,11 @@ function Dashboard({ dashboard, onRefresh }: { dashboard: DashboardData; onRefre
         <h2 id="learn-title">Learn the basics</h2>
         <p>Carbon dioxide equivalent, or CO2e, lets different greenhouse gases be compared in one simple unit. Your biggest daily levers are usually transport, home energy, food choices, and new purchases.</p>
         <p>Small repeatable actions matter because they become defaults. Carbon Compass highlights the next habit with the clearest impact for your own data.</p>
-        <div className="milestones" aria-label="Milestones">
-          {dashboard.progress.milestones.map((milestone) => <span key={milestone.code}>{milestone.title}</span>)}
-        </div>
+        <ul className="milestones-list" aria-label="Milestones">
+          {dashboard.progress.milestones.map((milestone) => (
+            <li key={milestone.code} className="milestone-badge">{milestone.title}</li>
+          ))}
+        </ul>
       </section>
     </div>
   );

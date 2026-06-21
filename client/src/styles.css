@@ -283,15 +283,16 @@ textarea {
   gap: 8px;
   align-items: flex-start;
 }
-
-.milestones {
+.milestones-list {
+  list-style: none;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 16px;
 }
 
-.milestones span {
+.milestone-badge {
   background: #f4dfb7;
   border: 1px solid #d97706;
   border-radius: 999px;

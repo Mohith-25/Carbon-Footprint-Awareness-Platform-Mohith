@@ -42,9 +42,17 @@ export function createApp(db: Db) {
       if (repos.users.findByEmail(body.email)) {
         throw new HttpError(409, "An account with this email already exists");
       }
-      const user = await repos.users.create(body.name, body.email, body.password);
-      setAuthCookie(res, signAuthToken({ id: user.id, email: user.email }));
-      res.status(201).json({ user });
+      try {
+        const user = await repos.users.create(body.name, body.email, body.password);
+        setAuthCookie(res, signAuthToken({ id: user.id, email: user.email }));
+        res.status(201).json({ user });
+      } catch (error: unknown) {
+        const err = error as { code?: string; message?: string };
+        if (err.code === "SQLITE_CONSTRAINT" || err.message?.includes("UNIQUE constraint failed")) {
+          throw new HttpError(409, "An account with this email already exists");
+        }
+        throw error;
+      }
     })
   );
 
@@ -81,6 +89,7 @@ export function createApp(db: Db) {
       const input = footprintSchema.parse(req.body);
       const breakdown = calculateFootprint(input);
       const id = repos.footprints.create(req.user!.id, input, breakdown.total);
+      repos.progress.checkAndInsertMilestones(req.user!.id);
       res.status(201).json({
         entry: { id, ...input, totalKg: breakdown.total },
         breakdown,
@@ -128,6 +137,7 @@ export function createApp(db: Db) {
     asyncHandler(async (req, res) => {
       const input = actionSchema.parse(req.body);
       const id = repos.actions.create(req.user!.id, input);
+      repos.progress.checkAndInsertMilestones(req.user!.id);
       res.status(201).json({
         action: { id, ...input },
         progress: repos.progress.summary(req.user!.id)

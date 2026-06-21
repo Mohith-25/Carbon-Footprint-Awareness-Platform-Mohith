@@ -16,7 +16,6 @@ export function asyncHandler(handler: (req: Request, res: Response, next: NextFu
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction): void {
   if (error instanceof ZodError) {
     res.status(400).json({ error: "Validation failed", details: error.flatten() });
